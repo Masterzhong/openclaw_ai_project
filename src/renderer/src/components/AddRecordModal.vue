@@ -259,7 +259,7 @@ function handleAmountInput(e: Event) {
   const input = e.target as HTMLInputElement
   let value = input.value
   
-  // 移除非数字和小数点
+  // 移除非数字（保留小数点）
   let cleaned = value.replace(/[^\d.]/g, '')
   
   // 处理多个小数点 - 只保留第一个
@@ -268,35 +268,47 @@ function handleAmountInput(e: Event) {
     cleaned = parts[0] + '.' + parts.slice(1).join('')
   }
   
-  // 限制小数位数
+  // 限制小数位数（最多2位）
   if (parts.length === 2 && parts[1].length > 2) {
     cleaned = parts[0] + '.' + parts[1].substring(0, 2)
   }
   
-  // 解析并限制范围（支持以小数点开头的情况，如 .5）
+  // 如果是空，直接返回
+  if (cleaned === '') {
+    amountDisplay.value = ''
+    form.value.amount = 0
+    return
+  }
+  
+  // 如果只有小数点，允许显示
+  if (cleaned === '.') {
+    amountDisplay.value = '.'
+    form.value.amount = 0
+    return
+  }
+  
+  // 解析数字
   let num = parseFloat(cleaned)
   if (isNaN(num)) {
-    // 如果是空或只有小数点，允许继续输入
-    if (cleaned === '' || cleaned === '.') {
-      amountDisplay.value = cleaned
-      form.value.amount = 0
-      return
-    }
     num = 0
   }
   
+  // 限制最大值
   if (num > 999999.99) {
-    form.value.amount = 999999.99
-    amountDisplay.value = '999999.99'
+    num = 999999.99
+    cleaned = '999999.99'
+  }
+  
+  form.value.amount = num
+  
+  // 如果包含小数点且小数部分存在，不添加千位分隔符
+  if (cleaned.includes('.') && parts.length === 2) {
+    amountDisplay.value = cleaned
+  } else if (!cleaned.includes('.')) {
+    // 整数部分添加千位分隔符
+    amountDisplay.value = formatWithThousands(num)
   } else {
-    form.value.amount = num
-    // 如果是空或以小数点开头，不格式化
-    if (cleaned === '' || cleaned === '.') {
-      amountDisplay.value = cleaned
-    } else {
-      // 添加千位分隔符格式化
-      amountDisplay.value = formatWithThousands(num)
-    }
+    amountDisplay.value = cleaned
   }
 }
 
