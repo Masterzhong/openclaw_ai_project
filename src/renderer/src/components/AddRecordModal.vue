@@ -262,7 +262,7 @@ function handleAmountInput(e: Event) {
   // 移除非数字和小数点
   let cleaned = value.replace(/[^\d.]/g, '')
   
-  // 处理多个小数点
+  // 处理多个小数点 - 只保留第一个
   const parts = cleaned.split('.')
   if (parts.length > 2) {
     cleaned = parts[0] + '.' + parts.slice(1).join('')
@@ -273,15 +273,30 @@ function handleAmountInput(e: Event) {
     cleaned = parts[0] + '.' + parts[1].substring(0, 2)
   }
   
-  // 解析并限制范围
-  const num = parseAmount(cleaned)
+  // 解析并限制范围（支持以小数点开头的情况，如 .5）
+  let num = parseFloat(cleaned)
+  if (isNaN(num)) {
+    // 如果是空或只有小数点，允许继续输入
+    if (cleaned === '' || cleaned === '.') {
+      amountDisplay.value = cleaned
+      form.value.amount = 0
+      return
+    }
+    num = 0
+  }
+  
   if (num > 999999.99) {
     form.value.amount = 999999.99
-    amountDisplay.value = formatWithThousands(999999.99)
+    amountDisplay.value = '999999.99'
   } else {
     form.value.amount = num
-    // 添加千位分隔符格式化
-    amountDisplay.value = formatWithThousands(num)
+    // 如果是空或以小数点开头，不格式化
+    if (cleaned === '' || cleaned === '.') {
+      amountDisplay.value = cleaned
+    } else {
+      // 添加千位分隔符格式化
+      amountDisplay.value = formatWithThousands(num)
+    }
   }
 }
 
